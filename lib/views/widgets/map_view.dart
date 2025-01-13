@@ -13,19 +13,16 @@ class MapView extends StatefulWidget {
 
 class _MapViewState extends State<MapView> {
   final MapController _mapController = MapController();
-
+  bool _isMapInitialized = false;
   double _currentZoom = 16.0;
 
   @override
   Widget build(BuildContext context) {
     final storeProvider = Provider.of<StoreProvider>(context);
 
-    final LatLng center = storeProvider.selectedStore != null
-        ? LatLng(storeProvider.selectedStore!.latitude,
-            storeProvider.selectedStore!.longitude)
-        : LatLng(16.688653, 74.272591);
+    final LatLng initialCenter = LatLng(16.688653, 74.272591);
 
-    if (storeProvider.selectedStore != null) {
+    if (storeProvider.selectedStore != null && _isMapInitialized) {
       _mapController.move(
         LatLng(storeProvider.selectedStore!.latitude,
             storeProvider.selectedStore!.longitude),
@@ -36,8 +33,13 @@ class _MapViewState extends State<MapView> {
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(
-        initialCenter: center,
+        initialCenter: initialCenter,
         initialZoom: _currentZoom,
+        onMapReady: () {
+          setState(() {
+            _isMapInitialized = true;
+          });
+        },
         onPositionChanged: (position, hasGesture) {
           setState(() {
             _currentZoom = position.zoom;
@@ -47,7 +49,7 @@ class _MapViewState extends State<MapView> {
       children: [
         TileLayer(
           urlTemplate:
-              'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', // No subdomains
+              'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', // Default OpenStreetMap tiles
         ),
         MarkerLayer(
           markers: storeProvider.stores.map((store) {
@@ -59,10 +61,12 @@ class _MapViewState extends State<MapView> {
               child: GestureDetector(
                 onTap: () {
                   storeProvider.selectStore(store);
-                  _mapController.move(
-                    LatLng(store.latitude, store.longitude),
-                    _currentZoom,
-                  );
+                  if (_isMapInitialized) {
+                    _mapController.move(
+                      LatLng(store.latitude, store.longitude),
+                      _currentZoom,
+                    );
+                  }
                 },
                 child: Icon(
                   Icons.location_on,

@@ -14,6 +14,7 @@ class StoreScreen extends StatefulWidget {
 
 class _StoreScreenState extends State<StoreScreen> {
   final StoreController _storeController = StoreController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -24,6 +25,20 @@ class _StoreScreenState extends State<StoreScreen> {
   }
 
   @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void scrollToTop() {
+    _scrollController.animateTo(
+      0.0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -31,16 +46,14 @@ class _StoreScreenState extends State<StoreScreen> {
         centerTitle: true,
         backgroundColor: Colors.orange.shade800,
       ),
-      body: Column(
+      body: ListView(
+        controller: _scrollController,
         children: [
-          Expanded(
-            flex: 1,
+          SizedBox(
+            height: 300,
             child: MapView(),
           ),
-          Expanded(
-            flex: 1,
-            child: StoreList(),
-          ),
+          StoreList(onStoreSelected: scrollToTop),
         ],
       ),
     );
